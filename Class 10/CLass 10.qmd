@@ -1,0 +1,114 @@
+---
+title: "Class 10: Structural Bioinformatics (p. 1)"
+author: "Nundini Varshney (PID: A16867985)"
+format: html
+---
+
+# 1: Introduction to the RCSB Protein Data Bank (PDB)
+
+Here we examine the size and composition of the main database of biomolecular structures - te PDB. 
+
+Get a CSV file from the PDB database and read it into R. 
+
+```{r}
+pdbstats <- read.csv("Data Export Summary.csv", row.names = 1)
+head(pdbstats)
+```
+
+
+> Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+
+My pdbstats data frame has numbers with commas which may cause problems. Let's see:
+
+```{r}
+pdbstats$X.ray
+```
+
+```{r}
+as.numeric(gsub(",", "", pdbstats$X.ray))
+```
+I can turn this snipet into a function that I can use for every column in the table
+
+```{r}
+commasum <- function(x) {
+  sum(as.numeric(gsub(",", "", x)))
+}
+
+commasum(pdbstats$X.ray)
+```
+
+```{r}
+totals <- apply(pdbstats,2,commasum)
+totals
+```
+
+```{r}
+round(totals/totals["Total"] * 100, 2)
+```
+
+> Q2: What fraction of Uniprot does the PDB cover in rough terms?
+
+```{r}
+(215684/249751891 * 100)
+```
+
+# 2. Visualizing Protein Structure 
+
+
+We will learn the basics of Mol* (mol-star) homepage:
+https://molstar.org/viewer/
+
+
+We will play with PDB code 1HSG.
+
+
+![](1HSG.png)
+
+
+Show the ASP 25 amino acids: 
+
+
+![HIV-Pr with a bound inhibitor showing the two important Asp 25 amino acids](1HSGhighlight.png)
+
+
+
+## Back to R and working with PDB structures 
+
+Predict the dynamics (flexibility) of an important protein: 
+
+```{r}
+library(bio3d)
+
+hiv <- read.pdb("1hsg")
+hiv
+```
+
+
+```{r}
+head(hiv$atom)
+```
+
+```{r}
+pdbseq(hiv)
+```
+
+Here we will do a Normal Mode Analysis (NMA) to predict functional motions of a kinase protein.
+
+
+```{r}
+adk <- read.pdb("6s36")
+adk
+```
+
+```{r}
+modes <- nma(adk)
+plot(modes)
+```
+
+Make a "movie" called a trajectory of the predicted motions:
+
+```{r}
+mktrj(modes, file="adk_m7.pdb")
+```
+
+Then I can open this file in Mol*...
