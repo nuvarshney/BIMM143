@@ -1,0 +1,10 @@
+---
+title: "Class 15"
+author: "Nundini Varshney (PID: A16867985)"
+format: html
+---
+
+```{r}
+read.tsv("mm-second.x.zebrafish.tsv")
+```
+
