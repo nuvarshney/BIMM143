@@ -1,0 +1,270 @@
+---
+title: "Class 8: Breast Cancer Mini Project"
+author: "Nundini Varshney (PID: A16867985)"
+format: html
+---
+
+Before we get stuck into project work we will have a quick look at applying PCA to some example RNAseq data (tail end of lab 7). 
+
+Read the document
+```{r}
+url2 <- "https://tinyurl.com/expression-CSV"
+rna.data <- read.csv(url2, row.names=1)
+head(rna.data)
+```
+
+>Q1. How many genes in this data set?
+
+```{r}
+nrow(rna.data)
+```
+Generating barplots etc. to make sense of this data is really not an exciting or worthwhile option to consider. So lets do PCA and plot the results:
+
+## Run PCA
+
+```{r}
+## Again we have to take the transpose of our data 
+pca <- prcomp(t(rna.data), scale=TRUE)
+ 
+## Simple un polished plot of pc1 and pc2
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2")
+```
+
+Take summary.
+
+```{r}
+summary(pca)
+```
+A quick barplot summary of this Proportion of Variance for each PC can be obtained by calling the plot() function directly on our prcomp result object.
+
+```{r}
+plot(pca, main="Quick scree plot")
+```
+
+```{r}
+## Variance captured per PC 
+pca.var <- pca$sdev^2
+
+## Percent variance is often more informative to look at 
+pca.var.per <- round(pca.var/sum(pca.var)*100, 1)
+pca.var.per
+```
+
+Using this, generate our own plot.
+
+```{r}
+barplot(pca.var.per, main="Scree Plot", 
+        names.arg = paste0("PC", 1:10),
+        xlab="Principal Component", ylab="Percent Variation")
+```
+
+```{r}
+## A vector of colors for wt and ko samples
+colvec <- colnames(rna.data)
+colvec[grep("wt", colvec)] <- "red"
+colvec[grep("ko", colvec)] <- "blue"
+
+plot(pca$x[,1], pca$x[,2], col=colvec, pch=16,
+     xlab=paste0("PC1 (", pca.var.per[1], "%)"),
+     ylab=paste0("PC2 (", pca.var.per[2], "%)"))
+
+text(pca$x[,1], pca$x[,2], labels = colnames(rna.data), pos=c(rep(4,5), rep(2,5)))
+```
+
+
+## Now, time for Lab 8 Mini Project
+
+First we will read the data:
+
+```{r}
+wisc.df <- read.csv("WisconsinCancer.csv", row.names=1)
+head(wisc.df)
+```
+
+
+Note that the first column here wisc.df$diagnosis is a pathologist provided expert diagnosis.
+
+```{r}
+diagnosis <- as.factor(wisc.df$diagnosis)
+```
+
+
+Now I want to make sure I remove that column from my dataset for analysis.
+
+```{r}
+wisc.data <- wisc.df[,-1]
+head(wisc.data)
+```
+> Q1. How many observations are in this dataset?
+
+```{r}
+ncol(wisc.data)
+
+```
+
+> Q2. How many of the observations have a malignant diagnosis?
+
+```{r}
+table(wisc.df$diagnosis)
+```
+> Q3. How many variables/features in the data are suffixed with _mean?
+
+```{r}
+length(grep("_mean", colnames(wisc.data), value = TRUE))
+```
+## Principal Component Analysis
+
+Here we'll use `prcomp()` on the `wisc.data` object - the one without the diagnosis column. 
+
+First, we have to devide whether to use the `scale=TRUE` argument when we run `prcomp()`
+
+We can look at the means and standard deviation of each column. If they are similar then we are all good to go. If not, we should use `scale=TRUE`
+
+```{r}
+colMeans(wisc.data)
+```
+```{r}
+apply(wisc.data, 2, sd)
+```
+
+These are very different so we should scale=TRUE.
+
+```{r}
+wisc.pr <- prcomp(wisc.data, scale=TRUE)
+summary(wisc.pr)
+```
+
+> Q4. From your results, what proportion of the original variance is captured by the first principal components (PC1)?
+
+44.27% 
+
+> Q5. How many principal components (PCs) are required to describe at least 70% of the original variance in the data?
+
+3 PCs capture 72.6% 
+
+> Q6. How many principal components (PCs) are required to describe at least 90% of the original variance in the data?
+
+7 PCs capture at least 90%
+
+## Plotting the PCA results
+
+```{r}
+biplot(wisc.pr)
+```
+
+> Q7. What stands out to you about this plot? Is it easy or difficult to understand? Why?
+
+Hard to understand because overlapping data. 
+
+We need to make our own plot.
+
+```{r}
+attributes(wisc.pr)
+```
+
+```{r}
+plot(wisc.pr$x[,1], wisc.pr$x[,2], col=diagnosis)
+```
+
+```{r}
+library(ggplot2)
+
+pc <- as.data.frame(wisc.pr$x)
+
+ggplot(pc) +
+  aes(PC1, PC2, col=diagnosis) +
+  geom_point()
+```
+
+## Communicating PCA results
+
+
+> Q9. For the first principal component, what is the component of the loading vector?
+
+```{r}
+wisc.pr$rotation["concave.points_mean",1]
+```
+
+> Q10. What is the minimum number of principal components required to explain 80% of the variance of the data?
+
+```{r}
+tbl <- summary(wisc.pr)
+which(tbl$importance[3,] > 0.8)[1]
+```
+
+
+## Hierarchical clustering
+
+The main function for hierarchical clustering is called `hclust()` it takes a distance matrix as input.
+
+```{r}
+d <- dist(scale(wisc.data))
+wisc.hclust <- hclust(d)
+plot(wisc.hclust)
+```
+
+```{r}
+plot(wisc.hclust)
+abline(h=18, col="red")
+grps <- cutree(wisc.hclust, h=18)
+table(grps)
+```
+
+
+Come back here later to see how our cluster grps correspond to M or B groups. 
+
+
+## 5. Combining methods
+
+Here we will perform clustering on our PCA results rather than the original data.
+
+In other words, we will cluster using `wisc.pr$x` - our new better variable or PCs. We can choose as many or as few PCs to use as we like.
+
+```{r}
+d.pc <- dist( wisc.pr$x[, 1:3] )
+
+wisc.pr.hclust <- hclust( d.pc, method="ward.D2")
+plot(wisc.pr.hclust)
+abline(h=80, col="red")
+```
+
+```{r}
+grps <- cutree(wisc.pr.hclust, h=80)
+table(grps)
+```
+
+We can use `table()` function to make a cross-table as well as just a count table.
+
+```{r}
+table(diagnosis)
+```
+
+```{r}
+table(grps, diagnosis)
+```
+
+Write a note here about how to read this corss-table result:
+
+The results indicate that our cluster 1 mostly captures cancer (M) and our cluster 2 mainly captures healthy (B) samples/indviduals. 
+
+
+## 7. Prediction
+
+```{r}
+#url <- "new_samples.csv"
+url <- "https://tinyurl.com/new-samples-CSV"
+new <- read.csv(url)
+npc <- predict(wisc.pr, newdata=new)
+npc
+```
+And plot this up
+
+```{r}
+plot(wisc.pr$x[,1:2], col=grps)
+points(npc[,1], npc[,2], col="blue", pch=16, cex=3)
+text(npc[,1], npc[,2], c(1,2), col="white")
+```
+
+> Q18. Which of these new patients should we prioritize for follow up based on your results?
+
+Patient 2
