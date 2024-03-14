@@ -1,0 +1,48 @@
+---
+title: "Class 12: Introduction to Genome Informatics"
+author: "Nundini Varshney (PID: A16867985)"
+format: html
+---
+
+## Section 4: Population Scale Analysis [HOMEWORK]
+
+One sample is obviously not enough to know what is happening in a population. You are 
+interested in assessing genetic differences on a population scale. So, you processed about ~230 samples and did the normalization on a genome level. Now, you want to find whether there is any association of the 4 asthma-associated SNPs (rs8067378…) on ORMDL3 
+expression.
+
+Q13: Read this file into R and determine the sample size for each genotype and their corresponding median expression levels for each of these genotypes. 
+
+```{r}
+#First, I read the file into R
+
+genstats <- read.table("textfile.txt", row.names = 1)
+head(genstats)
+```
+```{r}
+# How many rows are there?
+nrow(genstats)
+
+# What is the sample size for each genotype?
+table(genstats$geno)
+```
+
+```{r}
+# Find corresponding median levels for each genotype
+median <- boxplot(genstat)
+```
+
+
+
+```{r}
+library(ggplot2)
+```
+
+#Q14: Generate a boxplot with a box per genotype, what could you infer from the relative expression value between A/A and G/G displayed in this plot? Does the SNP effect the expression of ORMDL3?
+
+Now, I will create a boxplot for this data. 
+
+```{r}
+ggplot(genstats) + aes(geno, exp, fill=geno) +
+  geom_boxplot(notch=TRUE)
+```
+

@@ -1,0 +1,17 @@
+---
+title: "Lab Class 12 Pt.1 (RNASeq Galaxy)"
+author: "Nundini Varshney (PID: A16867985)"
+format: html
+---
+
+## Section 1: Identify genetic variants of interest 
+
+There are a number of gene variants associated with childhood asthma. You want to find out what they are by visiting OMIM (http://www.omim.org) and locating the 
+Verlaan et al. paper description. 
+
+> Q1: What are those 4 candidate SNPs?
+
+```{r}
+
+```
+
